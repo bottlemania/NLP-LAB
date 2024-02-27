@@ -7,7 +7,7 @@ def main():
     n_states = len(states)
 
     # Define the observation space
-    observations = ["a", "b", "c"]
+    observations = ["cola", "ice_t", "lem"]
     n_observations = len(observations)
 
     # Define the initial state distribution
@@ -22,7 +22,7 @@ def main():
         [0.1, 0.7, 0.2]]
 
     # required output sequence
-    op_seq = "c b a".split(" ")
+    op_seq = "lem,ice_t,cola".split(",")
     n_op = len(op_seq)
     t = n_op + 1
 
@@ -56,12 +56,9 @@ def forward_algorithm(pi, A, B, op_seq, n_states, t, observations):
 
     # Execute the forward algorithm
     for time in range(1, t):
-        obv = observations.index(op_seq[time - 1])
         for j in range(n_states):
-            alpha[j][time] = 0
-            for i in range(n_states):
-                alpha[j][time] += alpha[i][time - 1] * A[i][j] * B[i][obv]
-
+            alpha[j][time] = sum(alpha[i][time - 1] * A[i][j] * B[i][observations.index(op_seq[time - 1])] for i in range(n_states))
+                
     # Calculate the probability of the observation sequence
     for i in range(t):
         prob.append(sum(alpha[j][i] for j in range(n_states)))    
@@ -81,11 +78,8 @@ def backward_algorithm(pi, A, B, op_seq, n_states, t, observations):
 
     # Execute the backward algorithm
     for time in range(t - 2, -1, -1):
-        obv = observations.index(op_seq[time])
         for i in range(n_states):
-            beta[i][time] = 0
-            for j in range(n_states):
-                beta[i][time] += beta[j][time + 1] * A[i][j] * B[i][obv]
+            beta[i][time] = sum(beta[j][time + 1] * A[i][j] * B[i][observations.index(op_seq[time])] for j in range(n_states))
 
     # Calculate the probability of the observation sequence
     prob=+(sum((pi[i]*beta[i][0]) for i in range(n_states)))
